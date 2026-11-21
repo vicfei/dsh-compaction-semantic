@@ -27,7 +27,14 @@ surface. V1 adopts fast-jev-compaction's battle-tested defaults (pinned head
 + recent window, staged state truncation into ~25k tokens, verbatim keeps).
 → [docs/analysis-cc-codex-compaction.md](docs/analysis-cc-codex-compaction.md)
 
-### V1 · Semantic tool-result pruner (in planning)
+### V1 · Semantic tool-result pruner (design complete, implementation next)
+- [x] **Design** — [docs/design-v1.md](docs/design-v1.md): decision-complete
+      (mount = prepend listener only, no services defined; candidates with
+      pins + savings floor + per-step cap; paragraph-bounded spans; shared
+      state via payload `messages` + surface walks; one batched typed
+      request; keep-on-doubt at P<0.25; provider matrix incl. air-gapped
+      `openai` JSON judge; official protocol byte-for-byte; full fail-closed
+      matrix; hermetic + live test plan; 5-PR breakdown awaiting approval)
 - [x] Spike #2 four questions — answered statically with file:line evidence
       ([docs/spike2-four-questions.md](docs/spike2-four-questions.md)):
       `prepend: true` + waterfall holds the async chain (mount confirmed);
@@ -36,17 +43,17 @@ surface. V1 adopts fast-jev-compaction's battle-tested defaults (pinned head
       (coexist — install = one bundles entry); judgment state =
       `messages` payload + surface `user/message`/`goal/change` + `goals`
       service + `tokenMeter`
-- [ ] Hello-world live smoke (first V1 PR, first commit): hello plugin logs
-      the pre-step payload shape and verifies our listener runs before the
-      engine's
-- [ ] Judgment client: provider-pluggable (TypeSafe Jev `jev-latest` |
-      OpenRouter | any OpenAI-compatible | off), one batched request,
-      typed keep/drop/span questions, calibrated thresholds, ~2.5 s timeout
-- [ ] Rewriter: scattered-span keep, verbatim retention, §3 protocol,
-      `minSavingsChars` floor (never judge small wins)
-- [ ] Hermetic tests (protocol conformance, fail-closed matrix) + live
-      session smoke with recorded before/after surfaces
-- [ ] npm `dsh-compaction-semantic` 0.1.0 + awesome-dsh-plugin submission
+- [ ] PR1 scaffold + config + hello-world prepend listener + live smoke #1
+      (payload shape; our log before the engine's)
+- [ ] PR2 candidates + spans + state builder (hermetic suites)
+- [ ] PR3 judge + providers (typesafe/openrouter/openai-json/off; contract
+      suites; credential-store keys; circuit breaker)
+- [ ] PR4 rewriter + protocol conformance (shadow-before-replace,
+      sourceEventSeqs) + fail-closed matrix
+- [ ] PR5 live smokes (mock-judge session: rewrite + engine skips summary +
+      replay recovers; judge-off ≡ stock) + install docs (bundles landmine
+      on first screen) + npm `dsh-compaction-semantic` 0.1.0 +
+      awesome-dsh-plugin submission
 
 ### V2 · Keep/drop compaction engine (after V1 proves the request shape)
 - [ ] `summarize()`-hook engine: per-message keep/drop instead of LLM prose

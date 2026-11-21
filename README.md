@@ -26,13 +26,13 @@ prunes *before* considering an LLM summary. That slot is this repo.
 
 ## What ships (plan)
 
-- **V1 — semantic tool-result pruner**: an `agent/pre-step` hook that runs
-  before the compaction engine's own listener, batches one judgment request
-  over all over-budget tool results (shared state = recent user asks + plan;
-  one typed question per span, ~300 ms class), and commits keep/drop
-  rewrites through the official replay-safe protocol
-  (`compaction/prune` shadow event → `tool/result` replace `surfaceOp`).
-  Judge off / timeout / error → skip entirely, official behavior unchanged.
+- **V1 — semantic tool-result pruner** (design complete:
+  [docs/design-v1.md](docs/design-v1.md)): an `agent/pre-step` hook
+  (prepend) that batches **one judgment request** over all over-budget tool
+  results, applies **scattered keep/drop at span granularity** (kept spans
+  byte-equal), and commits through the official replay-safe protocol.
+  Keep-on-doubt; provider-pluggable incl. an air-gapped OpenAI-compatible
+  judge; every failure mode fails closed to stock behavior.
 - **V2 — keep/drop compaction engine**: replace the summarizer with per-message
   keep/drop (the full thesis), riding the designed `summarize()` hook.
 
