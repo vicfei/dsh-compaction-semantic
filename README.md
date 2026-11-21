@@ -43,6 +43,11 @@ The cross-harness companion analysis — how Claude Code (three tiers +
 PreCompact/function hooks) and Codex (single tier, no hook, AGENTS.md
 mount) implement compaction, and why DSH is the best-positioned host:
 [docs/analysis-cc-codex-compaction.md](docs/analysis-cc-codex-compaction.md).
+Spike #2 resolved all four mount questions statically (`prepend: true` +
+waterfall holds the async chain; same-name service shadowing is a hard
+error; the official pruner ships in the stock core bundle; the judgment
+state is directly reachable at pre-step):
+[docs/spike2-four-questions.md](docs/spike2-four-questions.md).
 
 ## Status
 

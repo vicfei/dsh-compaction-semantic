@@ -183,22 +183,14 @@ on real sessions.
       verbatim: true          # never rewrite kept text
 ```
 
-## 8. Open questions for spike #2 (hello-world probe, no semantics)
+## 8. Open questions for spike #2 — **all four resolved**
 
-1. **Listener priority**: confirm the exact dsh/cordis ordering knob that
-   puts our `agent/pre-step` listener ahead of the engine's (registered at
-   `dsh-compaction-basic:839`), and that an async listener correctly delays
-   the next listener (cordis `next()` semantics — the engine's listener takes
-   `(…, next)`, so a prior async listener that awaits before calling `next()`
-   should hold the chain; verify).
-2. **Service shadowing legality**: what happens today if two services named
-   `toolResultPruner` are both loaded (priority? last-wins? error?) — decides
-   whether deployment shape A is usable as fallback.
-3. **Activation**: is the official pruner on by default in a stock profile
-   (bundles list), or opt-in? Affects our install instructions.
-4. **Session access at pre-step**: the exact surface shape for "recent user
-   asks + plan" (the judgment `state`) from `agent.session` inside the
-   pre-step hook.
+→ see [spike2-four-questions.md](spike2-four-questions.md) (static
+reverse-read, file:line evidence): `prepend: true` + waterfall chain holds
+async work (Q1); same-name service registration is a hard error, shape A
+dead (Q2); the official pruner ships in the `dsh-base` core bundle of every
+stock profile (Q3); judgment state = `messages` payload + surface
+`user/message`/`goal/change` events + `goals` service + `tokenMeter` (Q4).
 
 ## 9. Why this is the right first product (mass-pain evidence recap)
 

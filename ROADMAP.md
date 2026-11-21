@@ -28,10 +28,17 @@ surface. V1 adopts fast-jev-compaction's battle-tested defaults (pinned head
 → [docs/analysis-cc-codex-compaction.md](docs/analysis-cc-codex-compaction.md)
 
 ### V1 · Semantic tool-result pruner (in planning)
-- [ ] Spike #2 hello-world: listener-priority knob vs engine's
-      `agent/pre-step` (`dsh-compaction-basic:839`); async `next()` chain
-      semantics; double-service shadowing legality; stock-profile activation
-      of the official pruner
+- [x] Spike #2 four questions — answered statically with file:line evidence
+      ([docs/spike2-four-questions.md](docs/spike2-four-questions.md)):
+      `prepend: true` + waterfall holds the async chain (mount confirmed);
+      same-name service shadowing is a **hard registration error** (shape A
+      dead); official pruner + engine ship in the `dsh-base` core bundle
+      (coexist — install = one bundles entry); judgment state =
+      `messages` payload + surface `user/message`/`goal/change` + `goals`
+      service + `tokenMeter`
+- [ ] Hello-world live smoke (first V1 PR, first commit): hello plugin logs
+      the pre-step payload shape and verifies our listener runs before the
+      engine's
 - [ ] Judgment client: provider-pluggable (TypeSafe Jev `jev-latest` |
       OpenRouter | any OpenAI-compatible | off), one batched request,
       typed keep/drop/span questions, calibrated thresholds, ~2.5 s timeout
