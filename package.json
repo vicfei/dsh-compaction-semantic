@@ -1,0 +1,18 @@
+{
+  "name": "dsh-compaction-semantic",
+  "version": "0.0.1",
+  "description": "Semantic context compaction for DeepSeek Harness — keep/drop by calibrated judgment instead of character arithmetic; kept content stays verbatim, failures fail closed to official behavior",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vicfei/dsh-compaction-semantic.git"
+  },
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "compaction",
+    "context-management",
+    "jev",
+    "typesafe"
+  ]
+}
