@@ -158,10 +158,16 @@ but the only one Codex offers.
 
 - Claude Code hooks semantics: `code.claude.com/docs/en/hooks` (PreCompact /
   PostCompact / SessionStart `compact` matcher / InstructionsLoaded) —
-  official docs, fetched 2026-11-21. The platform compaction overview page
-  (`platform.claude.com/docs/en/build-with-claude/compaction`) region-blocks
-  this research host; its content was cross-read via search summaries —
-  tier structure and 60–70% reclamation claims are consistent across both.
+  official docs, fetched 2026-11-21.
+- Primary-source verification (2026-11-21, node=singapore, issue #1): the
+  platform compaction overview fetched unblocked and found to document the
+  **API-layer compaction beta**, not Claude Code's client-side compaction;
+  `code.claude.com/docs` verified in full. Verdicts per claim: 60–70% and
+  the 8-section template remain community-sourced (no official figure or
+  template exists); preservation semantics are officially documented as a
+  re-injection model (see the verification section); "microcompaction" is
+  officially absent as a term, with tool-result clearing acknowledged as a
+  cache event in costs.md.
 - Microcompaction internals (`cache_edits`, disk save, MCP bug): community
   source analyses ("what we can all learn from the Claude Code source",
   Troy Hua's memory write-up, claudelog.com) + GitHub bug report (May 2026)
@@ -174,3 +180,65 @@ but the only one Codex offers.
   only shipped semantic-compaction implementation.
 
 Clean-room analysis; no upstream code copied.
+
+## Verified against primary source (2026-11-21, node=singapore)
+
+Verification run for issue #1. The delegating URL
+(`platform.claude.com/docs/en/build-with-claude/compaction`) fetched clean
+from this node (HTTP 200) — and the first finding is a **layer correction**:
+that page documents the **API-layer compaction beta** (`compact-2026-09-04`
+header, server-side summary, on-demand vs threshold modes), which is a
+*different mechanism* from the Claude Code client-side compaction this
+document analyzes. It contains no 60–70% figure, no summary template, and no
+microcompaction. The authoritative surface for the §1 claims is
+`code.claude.com/docs` — fetched in full (context-window, costs, glossary,
+how-claude-code-works, model-config, troubleshooting, prompt-caching,
+changelog ~1.4 MB). Verdicts:
+
+1. **60–70% reclamation (§1.2): not officially documented.** No official
+   page or changelog entry publishes any reclaim percentage. What is
+   official: the trigger (auto-compact window; sessions auto-compact "at
+   about 967K tokens by default", capped at the model's context window —
+   model-config.md; `CLAUDE_CODE_AUTO_COMPACT_WINDOW` override) and the
+   action ("compacts the conversation into a summary … keeps your requests
+   and key code snippets" — how-claude-code-works.md). The 60–70% figure
+   stays community-sourced; the earlier cross-read "consistency" with the
+   platform overview was an artifact of search summaries, not the platform
+   page itself.
+
+2. **Summary shape (§1.2/§1.3): template unofficial; preservation semantics
+   now officially documented — differently than the community summary.**
+   No official source describes an 8-section template. What is official
+   (context-window.md "What survives compaction") is a **re-injection
+   model** rather than "kept in summary": system prompt/output style still
+   apply; project-root CLAUDE.md + unscoped rules and auto memory
+   re-injected from disk; skill descriptions rebuilt; fresh git snapshot;
+   plan re-injected; path-scoped rules and nested CLAUDE.md reload on
+   demand; **up to five recently-modified files re-read** (>5,000-token
+   files return as `Referenced file` path references); invoked skill bodies
+   re-injected capped at 5,000/skill and 25,000 total; background commands
+   keep running (with a reminder so Claude doesn't duplicate them);
+   hook-added context is summarized with everything else; `SessionStart`
+   hooks matching `compact` re-run post-compaction. Official steering
+   surfaces confirmed: `/compact <focus>` and a "Compact Instructions"
+   section in CLAUDE.md both shape the summary (how-claude-code-works.md).
+   Refinement for §1.2: "first message / CLAUDE.md always re-injected"
+   under-states the official mechanism — most survival is *reload from
+   disk*, and file content comes back for at most five files.
+
+3. **Microcompaction (§1.1): the term is officially absent; the mechanism
+   is obliquely acknowledged.** "Microcompact*" appears zero times across
+   all official docs and the changelog. The one official breadcrumb:
+   costs.md counts "clearing old tool results from context" as a cache
+   event ("expected rebuild" — "when Claude Code has itself just rewritten
+   the conversation, by compaction **or by clearing old tool results from
+   context**"), confirming such a clearing pass exists and rewrites the
+   cached prefix. None of the internals (marker text, `cache_edits` path,
+   disk save, age policy) are documented. §1.1's community-source framing
+   stands, now with the official acknowledgment as supporting evidence.
+
+Adjacent confirmation from the fetched API-layer overview, for context: it
+documents server-side summary generation, keep-recent-turns (recent turns
+"word for word"), background compaction, and thinking-block preservation
+rules — the API tier of the same product family, distinct from Claude
+Code's client tier analyzed here.
