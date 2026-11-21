@@ -46,11 +46,20 @@ can learn from the Claude Code source") report the mechanics:
 
 ### 1.2 Auto-compaction (at threshold) and 1.3 manual `/compact`
 
-When the session nears the context limit, CC summarizes the conversation
-history (typically reclaiming 60–70%), guided by an internal structured
-summary format; `/compact` runs the same machinery on demand at a task
-boundary. First message / CLAUDE.md are always re-injected. This is the
-LLM-prose tier — verbatim loss by design.
+When the session nears the context limit (officially: "about 967K tokens by
+default", overridable via `CLAUDE_CODE_AUTO_COMPACT_WINDOW`), CC summarizes
+the conversation history — community write-ups report 60–70% reclamation, a
+figure **no official page publishes** (see Verification §V1) — into a summary
+that officially "keeps your requests and key code snippets"
+(how-claude-code-works.md). `/compact` (optionally `/compact <focus>`) runs
+the same machinery on demand. What survives is officially a **re-injection
+model**, not "kept in summary": CLAUDE.md + auto memory re-inject from disk,
+up to five recently-modified files are re-read (over-5,000-token files come
+back as `Referenced file` path references), invoked skill bodies re-inject
+capped at 5,000/skill and 25,000 total, background commands keep running,
+and `SessionStart(compact)` hooks re-run (context-window.md, "What survives
+compaction" — full table in Verification §V2). This is the LLM-prose tier —
+verbatim loss by design.
 
 ### 1.4 Extension points (official hooks)
 
@@ -153,6 +162,15 @@ but the only one Codex offers.
    - Codex's *no scroll-back* complaint validates the audit angle: our
      shadow events make every drop inspectable (`compaction/prune` +
      `sourceEventSeqs`).
+4. **The official survival table is a design contract for the keep-set**
+   (verified, Verification §V2): what CC re-injects after compaction —
+   CLAUDE.md/auto memory from disk, ≤5 recently-modified files re-read,
+   invoked skill bodies (5k/skill, 25k total), background commands,
+   `SessionStart(compact)` re-runs — is the vendor's answer to "what must
+   survive". A semantic pruner's keep-set must never *drop* what the host
+   would re-inject anyway (wasted judgment spend at best, contradiction at
+   worst): treat the survival layer as pinned-by-contract on top of the
+   pinned head + recent-window defaults.
 
 ## 4. Source provenance
 
