@@ -18,6 +18,15 @@ Reverse-read the shipped `@deepseek-ai/dsh@0.2.1-rc.5` closure:
   the only contract to borrow
 → [docs/analysis-official-pruner.md](docs/analysis-official-pruner.md)
 
+### S1b · Cross-harness compaction analysis ✅ (2026-11-21)
+Claude Code (microcompaction/auto/manual tiers, PreCompact instruct-or-block,
+function-hooks full replacement) vs Codex (single-tier summary, no compaction
+hook, AGENTS.md instruction mount) — confirmed: no harness ships semantic
+judgment; DSH's service slot + typed replay protocol is the strongest host
+surface. V1 adopts fast-jev-compaction's battle-tested defaults (pinned head
++ recent window, staged state truncation into ~25k tokens, verbatim keeps).
+→ [docs/analysis-cc-codex-compaction.md](docs/analysis-cc-codex-compaction.md)
+
 ### V1 · Semantic tool-result pruner (in planning)
 - [ ] Spike #2 hello-world: listener-priority knob vs engine's
       `agent/pre-step` (`dsh-compaction-basic:839`); async `next()` chain

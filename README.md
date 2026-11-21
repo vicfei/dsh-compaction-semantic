@@ -39,6 +39,10 @@ prunes *before* considering an LLM summary. That slot is this repo.
 Read the mount-mechanism deep read — how the official pruner attaches, the
 synchronous-call constraint that shapes V1, and the two insertion points:
 [docs/analysis-official-pruner.md](docs/analysis-official-pruner.md).
+The cross-harness companion analysis — how Claude Code (three tiers +
+PreCompact/function hooks) and Codex (single tier, no hook, AGENTS.md
+mount) implement compaction, and why DSH is the best-positioned host:
+[docs/analysis-cc-codex-compaction.md](docs/analysis-cc-codex-compaction.md).
 
 ## Status
 

@@ -29,6 +29,9 @@
 
 挂载机制精读（官方 pruner 如何接入、塑造 V1 的同步调用约束、两个插入点）：
 [docs/analysis-official-pruner.md](docs/analysis-official-pruner.md)（英文）。
+跨 harness 对照分析——Claude Code（三层体系 + PreCompact/function hooks）与
+Codex（单层、无钩子、AGENTS.md 挂载）的压缩实现，及 DSH 为何是最佳宿主：
+[docs/analysis-cc-codex-compaction.md](docs/analysis-cc-codex-compaction.md)（英文）。
 
 ## 状态
 
