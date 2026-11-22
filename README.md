@@ -53,4 +53,7 @@ state is directly reachable at pre-step):
 
 Spike #1 (this analysis) delivered 2026-11-21. See [ROADMAP.md](ROADMAP.md).
 
+> **Agent self-install** — paste this into your DeepSeek Harness agent:
+> `Install dsh-compaction-semantic from https://github.com/vicfei/dsh-compaction-semantic into this profile: run `+"`dsh plugin --profile <name> add dsh-compaction-semantic`"+` AND add it to the profile's dsh.profile.bundles list (judge stays off until you configure it — stock behavior is untouched).`
+
 Not affiliated with DeepSeek, TypeSafe, or any upstream. MIT.
