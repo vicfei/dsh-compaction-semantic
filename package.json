@@ -1,7 +1,7 @@
 {
   "name": "dsh-compaction-semantic",
-  "version": "0.0.1",
-  "description": "Semantic context compaction for DeepSeek Harness — keep/drop by calibrated judgment instead of character arithmetic; kept content stays verbatim, failures fail closed to official behavior",
+  "version": "0.1.0",
+  "description": "Semantic context compaction for DeepSeek Harness \u2014 keep/drop by calibrated judgment instead of character arithmetic; kept content stays verbatim, failures fail closed to official behavior",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -14,5 +14,40 @@
     "context-management",
     "jev",
     "typesafe"
-  ]
+  ],
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test tests/"
+  },
+  "files": [
+    "lib",
+    "tests",
+    "docs",
+    "LICENSE",
+    "README.md",
+    "ROADMAP.md"
+  ],
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "~4.0.5",
+    "@deepseek-ai/dsh-session": "0.2.1-rc.5",
+    "@deepseek-ai/dsh-token-meter": "0.2.1-rc.5"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/cordis": {
+      "optional": true
+    },
+    "@deepseek-ai/dsh-session": {
+      "optional": true
+    },
+    "@deepseek-ai/dsh-token-meter": {
+      "optional": true
+    }
+  }
 }
