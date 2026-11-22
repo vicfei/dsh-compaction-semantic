@@ -27,7 +27,7 @@ surface. V1 adopts fast-jev-compaction's battle-tested defaults (pinned head
 + recent window, staged state truncation into ~25k tokens, verbatim keeps).
 → [docs/analysis-cc-codex-compaction.md](docs/analysis-cc-codex-compaction.md)
 
-### V1 · Semantic tool-result pruner — **implementation merged 2026-11-22 (PR #3, 16 tests green)**; live smoke on a real host + npm 0.1.0 remain open
+### V1 · Semantic tool-result pruner — **implementation merged 2026-11-22 (PR #3, 16 tests green)**; live smoke on a real host + **npm 0.1.0 LIVE (2026-11-22, dist-tags verified)**
 - [x] **Design** — [docs/design-v1.md](docs/design-v1.md): decision-complete
       (mount = prepend listener only, no services defined; candidates with
       pins + savings floor + per-step cap; paragraph-bounded spans; shared
