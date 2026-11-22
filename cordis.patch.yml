@@ -1,8 +1,9 @@
 # dsh-compaction-semantic bundle patch — mounts the semantic tool-result pruner.
 # Fail-closed by design: judge provider "off" (or any failure) leaves the
 # official deterministic pruner and engine untouched.
-- id: dsh-compaction-semantic
-  name: 'dsh-compaction-semantic'
-  config:
-    judge:
-      provider: off
+- insert:
+    - id: dsh-compaction-semantic
+      name: 'dsh-compaction-semantic'
+      config:
+        judge:
+          provider: off
