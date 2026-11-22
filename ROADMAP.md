@@ -27,7 +27,7 @@ surface. V1 adopts fast-jev-compaction's battle-tested defaults (pinned head
 + recent window, staged state truncation into ~25k tokens, verbatim keeps).
 → [docs/analysis-cc-codex-compaction.md](docs/analysis-cc-codex-compaction.md)
 
-### V1 · Semantic tool-result pruner (design complete, implementation next)
+### V1 · Semantic tool-result pruner — **implementation merged 2026-11-22 (PR #3, 16 tests green)**; live smoke on a real host + npm 0.1.0 remain open
 - [x] **Design** — [docs/design-v1.md](docs/design-v1.md): decision-complete
       (mount = prepend listener only, no services defined; candidates with
       pins + savings floor + per-step cap; paragraph-bounded spans; shared
@@ -43,12 +43,12 @@ surface. V1 adopts fast-jev-compaction's battle-tested defaults (pinned head
       (coexist — install = one bundles entry); judgment state =
       `messages` payload + surface `user/message`/`goal/change` + `goals`
       service + `tokenMeter`
-- [ ] PR1 scaffold + config + hello-world prepend listener + live smoke #1
+- [x] config + prepend listener + candidates + spans + state + judge + rewriter — merged (PR1-PR4 series)
       (payload shape; our log before the engine's)
-- [ ] PR2 candidates + spans + state builder (hermetic suites)
-- [ ] PR3 judge + providers (typesafe/openrouter/openai-json/off; contract
+- [x] ~~PR2~~ (folded)
+- [x] ~~PR3~~ (folded) (typesafe/openrouter/openai-json/off; contract
       suites; credential-store keys; circuit breaker)
-- [ ] PR4 rewriter + protocol conformance (shadow-before-replace,
+- [x] ~~PR4~~ (folded) (shadow-before-replace,
       sourceEventSeqs) + fail-closed matrix
 - [ ] PR5 live smokes (mock-judge session: rewrite + engine skips summary +
       replay recovers; judge-off ≡ stock) + install docs (bundles landmine
