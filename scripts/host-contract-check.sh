@@ -31,4 +31,18 @@ echo 'fact 2 ok: pruner = Service "toolResultPruner"'
 grep -q 'surfaceOp:' "$B/dsh-compaction-tool-result-pruner/lib/index.js" \
   || fail "pruner no longer writes a surfaceOp (replay-safety contract)"
 echo 'fact 3 ok: replay-safe surfaceOp replace present'
+# 4. the compaction engine registers as service "compaction" (ctx.compaction — the V2 wrap target)
+grep -q 'super(ctx, "compaction")' "$B/dsh-compaction/lib/index.js" \
+  || fail "engine no longer registers as Service \"compaction\" (the V2 wrap target)"
+echo 'fact 4 ok: engine = Service "compaction"'
+# 5. summarize dispatch is dynamic through the instance (an instance wrap IS the subclass hook)
+grep -q 'summarize: (input, owner, abort) => this.summarize' "$B/dsh-compaction-basic/lib/index.js" \
+  || fail "summarize no longer dispatches through the instance (the V2 wrap assumption)"
+echo 'fact 5 ok: summarize dispatch is dynamic through the instance'
+# 6. the checkpoint framing constants (our exact-framing estimate mirrors them)
+grep -q 'const SUMMARY_OPEN_TAG = "<compacted-summary>"' "$B/dsh-compaction-basic/lib/index.js" \
+  || fail "checkpoint open tag changed (our exact framing estimate would drift)"
+grep -q 'const CHECKPOINT_PREAMBLE = "This is an automatically generated checkpoint' "$B/dsh-compaction-basic/lib/index.js" \
+  || fail "checkpoint preamble changed (our exact framing estimate would drift)"
+echo 'fact 6 ok: checkpoint framing constants unchanged'
 echo "HOST CONTRACT HOLDS against @deepseek-ai/dsh@$PIN"

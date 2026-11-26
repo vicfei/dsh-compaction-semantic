@@ -101,6 +101,18 @@ surface. V1 adopts fast-jev-compaction's battle-tested defaults (pinned head
       the invariant is priced tokens vs `shadowedRouteTokenCount`, dispatch is
       dynamic through the instance → an instance wrap IS the subclass hook);
       implementation awaits owner review
+- [x] engine implemented + live-proven (2026-11-26, #10): the instance wrap on
+      `ctx.compaction.summarize`; per-message batched judgment; confidence-then-
+      size shed order; exact three-block framed estimate; shrinking-prefix
+      target ladder (25/12/6% then stock) converging over the host's pressure
+      retries; surrogate sanitization; `kind:"engine"` ledger events;
+      `engine` config key (enabled/maxMessages/minSavingsTokens/targetFactor);
+      host-contract gate extended to 6 facts. **Live**: pressure-forced
+      compaction committed CLEAN with our checkpoint — the task's load-bearing
+      identifier byte-equal inside `<compacted-summary>`; post-compaction turn
+      recalled it. Four live-found bugs fixed + pinned: prefix-vs-range pricing
+      basis, exact framing constants, lone-surrogate serialization, and the
+      stock result-shape contract (provider/model fields). 29 tests green
 - [ ] A/B harness: same sessions through official vs semantic, measure
       recall of stale-but-load-bearing facts (the honest metric)
 
