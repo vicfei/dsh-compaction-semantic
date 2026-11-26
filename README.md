@@ -49,6 +49,31 @@ error; the official pruner ships in the stock core bundle; the judgment
 state is directly reachable at pre-step):
 [docs/spike2-four-questions.md](docs/spike2-four-questions.md).
 
+## Install & verify the mount (live-verified 2026-11-26, host 0.2.2-rc.1)
+
+```bash
+dsh plugin --profile <name> add dsh-compaction-semantic
+# the bundles-list landmine: plugin add installs but does NOT activate —
+# add "dsh-compaction-semantic" to package.json → dsh.profile.bundles by hand
+```
+
+The bundle's own `cordis.patch.yml` inserts the plugin row (`- insert:` —
+top-level rows are config overrides of *existing* rows and silently no-op);
+the row's `name` is the **module specifier** the loader resolves from the
+profile's `node_modules`. Verify the mount two ways:
+
+```bash
+dsh --profile <name> --dump-config | grep -A3 dsh-compaction-semantic   # the row is in the composed tree
+dsh --profile <name> "hi" 2>&1 | grep "semantic pruner armed"           # the plugin's own proof, every boot
+```
+
+Since 2026-11-26 the plugin prints that arming line (and each prune summary,
+and each fail-closed transition) to **stderr** — `ctx.logger` feeds a
+structured buffer that never reaches the terminal, which is why the first
+live check saw nothing. Dev landmine: pnpm `file:` installs are hard-linked —
+editing the source repo and `git checkout`-ing it back leaves the broken copy
+in the profile's `.pnpm` store; re-sync (or reinstall) before re-testing.
+
 ## Status
 
 Spike #1 (this analysis) delivered 2026-11-21. See [ROADMAP.md](ROADMAP.md).
