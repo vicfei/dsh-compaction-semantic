@@ -33,6 +33,28 @@
 Codex（单层、无钩子、AGENTS.md 挂载）的压缩实现，及 DSH 为何是最佳宿主：
 [docs/analysis-cc-codex-compaction.md](docs/analysis-cc-codex-compaction.md)（英文）。
 
+## 安装与挂载验证（2026-11-26 活机验证，宿主 0.2.2-rc.1）
+
+```bash
+dsh plugin --profile <name> add dsh-compaction-semantic
+# bundles 落雷：plugin add 只装不激活——须手工把 "dsh-compaction-semantic"
+# 加进 package.json 的 dsh.profile.bundles 列表
+```
+
+包内 `cordis.patch.yml` 以 `- insert:` 插入插件行（顶层行是对**既有**行的
+配置覆写，静默无效）；行内 `name` 是 loader 从 profile 的 `node_modules`
+解析的**模块说明符**。两步验证挂载：
+
+```bash
+dsh --profile <name> --dump-config | grep -A3 dsh-compaction-semantic   # 行在合成树里
+dsh --profile <name> "hi" 2>&1 | grep "semantic pruner armed"           # 插件自己的挂载证明，每次启动一行
+```
+
+2026-11-26 起插件把武装行（及每次剪枝摘要、每次 fail-closed 转移）打到
+**stderr**——`ctx.logger` 喂的是不上终端的结构化缓冲，这正是首轮活机检查
+什么都没看到的原因。开发落雷：pnpm `file:` 安装是硬链接——改了源仓再
+`git checkout` 还原，profile 的 `.pnpm` 存里留着坏副本；重测前先同步或重装。
+
 ## 状态
 
 Spike #1（本分析）2026-11-21 交付。见 [ROADMAP.md](ROADMAP.md)。

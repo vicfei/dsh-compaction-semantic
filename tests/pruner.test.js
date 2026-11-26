@@ -239,3 +239,16 @@ test("plugin: malformed payload (no session) → next(), no throw", async () => 
   apply(ctx, {});
   assert.equal(await fire(ctx, { messages: [] }), "NEXT");
 });
+
+// ── P0 (issue #4): operator visibility — the mount leaves a stderr trace ────
+test("apply() writes the arming line to stderr (the mount proof)", () => {
+  const lines = [];
+  const orig = process.stderr.write;
+  process.stderr.write = (c) => { lines.push(String(c)); return true; };
+  try {
+    apply({ on: () => {}, logger: { info() {}, warn() {}, debug() {} } }, {});
+  } finally {
+    process.stderr.write = orig;
+  }
+  assert(lines.some((l) => l.includes("dsh-compaction-semantic: semantic pruner armed (provider=off")));
+});

@@ -50,10 +50,24 @@ surface. V1 adopts fast-jev-compaction's battle-tested defaults (pinned head
       suites; credential-store keys; circuit breaker)
 - [x] ~~PR4~~ (folded) (shadow-before-replace,
       sourceEventSeqs) + fail-closed matrix
+- [x] install docs — the verified mount walk (bundles landmine, `- insert:`
+      row shape, `name` = module specifier, the stderr arming proof, the pnpm
+      `file:` hardlink landmine) — 2026-11-26, live on host 0.2.2-rc.1
 - [ ] PR5 live smokes (mock-judge session: rewrite + engine skips summary +
-      replay recovers; judge-off ≡ stock) + install docs (bundles landmine
-      on first screen) + npm `dsh-compaction-semantic` 0.1.0 +
-      awesome-dsh-plugin submission
+      replay recovers; judge-off ≡ stock) — npm 0.1.0 + awesome submission
+      already live (2026-11-22)
+
+### P0 · V1 closeout (2026-11-26)
+- [x] issue #4 — the mount verified end to end live: the module DOES load
+      (bundle listed → patch insert row → name resolved from profile
+      node_modules → apply() runs); the invisible-surface mystery was
+      `ctx.logger` feeding a structured buffer that never reaches the
+      terminal. Fix: the arming line, prune summaries and fail-closed
+      transitions now go to stderr (one line each)
+- [x] host-contract CI gate — `scripts/host-contract-check.sh` pins the dsh
+      closure and asserts the three S1 facts (optional non-awaited
+      pruneSession call · Service "toolResultPruner" · replay-safe
+      surfaceOp); first CI workflow for the repo (tests + syntax + gate)
 
 ### V2 · Keep/drop compaction engine (after V1 proves the request shape)
 - [ ] `summarize()`-hook engine: per-message keep/drop instead of LLM prose
