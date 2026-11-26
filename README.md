@@ -74,6 +74,32 @@ live check saw nothing. Dev landmine: pnpm `file:` installs are hard-linked —
 editing the source repo and `git checkout`-ing it back leaves the broken copy
 in the profile's `.pnpm` store; re-sync (or reinstall) before re-testing.
 
+## The compaction ledger — every decision is evidence (V2, 2026-11-26)
+
+Each judged keep/drop writes **one append-only ndjson event** — the trust
+surface ("what did you delete from my context?") and the A/B instrument in
+one file. Default `~/.dsh/compaction-ledger.ndjson`; `ledger.path` in the
+config overrides, `ledger.path: "off"` disables.
+
+```jsonc
+{"at":"…","v":1,"session":"session-5cb915bf-…","seq":22,"tool":"read",
+ "spans":[{"id":"22:0:0","p_keep":0.02,"kept":false}, …10 spans, 4 kept],
+ "committed":true,"charsBefore":9065,"charsAfter":3669,
+ "judge":{"provider":"openai","model":"jev-latest","latencyMs":13,"questions":10}}
+```
+
+Read the trail for one node:
+
+```bash
+node scripts/why.mjs [LEDGER_PATH] <seq>     # KEEP/DROP per span, with p_keep, chars, judge latency
+```
+
+Silence is meaningful: **no event = no judgment happened** (judge off, breaker
+tripped, zero candidates) — stock equivalence is proven by absence, not by a
+"did nothing" record. Uncommitted decisions (e.g. an invariant refusal) record
+with `committed: false`. The ledger never breaks a turn: an append failure
+prints to stderr and the pruning proceeds.
+
 ## Status
 
 Spike #1 (this analysis) delivered 2026-11-21. See [ROADMAP.md](ROADMAP.md).

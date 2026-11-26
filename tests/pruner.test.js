@@ -2,6 +2,9 @@
 // no network. Protocol conformance, fail-closed matrix, pins, breaker.
 import { test } from "node:test";
 import assert from "node:assert";
+import path from "node:path";
+import fs from "node:fs";
+import os from "node:os";
 import { resolveConfig, ConfigError } from "../lib/config.js";
 import { selectCandidates, textChars } from "../lib/candidates.js";
 import { splitBlocks, applyVerdicts } from "../lib/spans.js";
@@ -285,4 +288,67 @@ test("spanParts/rewrite: deriveEventMessage without content falls back to the ev
   const verdicts = new Map(parts.map((p, i) => [`1:0:${i}`, i % 2 ? 0.01 : 0.99]));
   const r = rewriteCandidate({ session, candidate, verdicts, config, tokenMeter: null });
   assert.equal(r.pruned, true);                                  // the fallback fed the split
+});
+
+// ── V2 #7: the compaction ledger — decisions as append-only evidence ────────
+import { appendLedger, readLedger, why, DEFAULT_LEDGER_PATH } from "../lib/ledger.js";
+
+test("config: ledger.path validates (string; rejects non-strings)", () => {
+  assert.equal(resolveConfig({}).ledger.path, "");
+  assert.equal(resolveConfig({ ledger: { path: "/tmp/x.ndjson" } }).ledger.path, "/tmp/x.ndjson");
+  assert.throws(() => resolveConfig({ ledger: { path: 5 } }), ConfigError);
+  assert.throws(() => resolveConfig({ ledger: { nope: 1 } }), ConfigError);
+});
+test("plugin: a judged decision writes ONE ledger event with span verdicts", async () => {
+  const ctx = makeFakeCtx();
+  const ledgerFile = path.join(fs.mkdtempSync(os.tmpdir() + "/cs-"), "l.ndjson");
+  apply(ctx, { ledger: { path: ledgerFile }, judge: { provider: "openai", baseUrl: "http://x" }, preserveRecentNodes: 0 });
+  const { session, events } = makeFakeSession({ results: [{ tool: "read", content: [{ type: "text", text: bigText(3000, "keepme ") + "\n\n" + bigText(12000, "spam ") }] }] });
+  const before = events.length;
+  const savedFetch = globalThis.fetch;
+  globalThis.fetch = okFetch(buildVerdicts(session));
+  try {
+    await fire(ctx, { agent: { session, id: "sess-ledger-1" }, messages: [] });
+  } finally { globalThis.fetch = savedFetch; }
+  const entries = readLedger(ledgerFile);
+  assert.equal(entries.length, 1);
+  const e = entries[0];
+  assert.equal(e.seq, 1);
+  assert.equal(e.session, "sess-ledger-1");
+  assert.equal(e.judge.provider, "openai");
+  assert.ok(e.judge.questions >= 2);
+  assert.ok(e.spans.length >= 2);
+  assert.equal(e.spans.every((sp) => typeof sp.p_keep === "number" && typeof sp.kept === "boolean"), true);
+  assert.equal(e.committed, true);
+  assert.ok(e.charsAfter < e.charsBefore);
+  assert.ok(events.length > before);                        // the rewrite committed
+  function buildVerdicts(sess) {
+    const c2 = selectCandidates({ session: sess, config: resolveConfig({ preserveRecentNodes: 0 }) })[0];
+    const vs = [];
+    for (const p of splitBlocks(sess.eventAt(c2.seq).data.message.content, 1200))
+      if (p.kind === "span") vs.push({ id: `${c2.seq}:${p.blockIndex}:${p.index}`, p_keep: p.text.includes("spam") ? 0.02 : 0.98 });
+    return vs;
+  }
+});
+test("plugin: judge off = zero ledger events (absence is the equivalence proof)", async () => {
+  const ctx = makeFakeCtx();
+  const ledgerFile = path.join(fs.mkdtempSync(os.tmpdir() + "/cs-"), "l.ndjson");
+  apply(ctx, { ledger: { path: ledgerFile } });             // provider defaults to off
+  const { session } = makeFakeSession({ results: [{ content: [{ type: "text", text: bigText(12000) }] }] });
+  await fire(ctx, { agent: { session }, messages: [] });
+  assert.equal(readLedger(ledgerFile).length, 0);
+});
+test("ledger: why() renders the trail and says so when nothing was judged", () => {
+  const dir = fs.mkdtempSync(os.tmpdir() + "/cs-");
+  const f = path.join(dir, "l.ndjson");
+  appendLedger(f, { at: "2026-11-26T00:00:00Z", v: 1, session: "s", seq: 7, tool: "read",
+                    spans: [{ id: "7:0:0", p_keep: 0.02, kept: false }, { id: "7:0:1", p_keep: 0.9, kept: true }],
+                    committed: true, charsBefore: 9065, charsAfter: 3669,
+                    judge: { provider: "openai", model: "m", latencyMs: 120, questions: 2 } });
+  const out = why(f, 7);
+  assert.match(out, /seq 7/);
+  assert.match(out, /DROP 7:0:0 p_keep=0.02/);
+  assert.match(out, /KEEP 7:0:1 p_keep=0.9/);
+  assert.match(out, /9065 -> 3669/);
+  assert.match(why(f, 99), /no ledger decisions/);
 });
