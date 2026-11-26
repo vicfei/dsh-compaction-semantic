@@ -9,7 +9,7 @@ jobs:
         with:
           node-version: 22
       - name: hermetic suite
-        run: node --test tests/
+        run: node --test
       - name: bundle syntax
         run: node --check lib/index.js
       - name: host contract (pinned dsh closure)
