@@ -74,6 +74,28 @@ live check saw nothing. Dev landmine: pnpm `file:` installs are hard-linked —
 editing the source repo and `git checkout`-ing it back leaves the broken copy
 in the profile's `.pnpm` store; re-sync (or reinstall) before re-testing.
 
+## The keep/drop engine (V2) — `summarize()` answers with verbatim content
+
+When a judge is configured, the plugin also wraps the host compaction engine's
+sole customization hook (`ctx.compaction.summarize`): instead of an LLM-written
+prose checkpoint, the replacement is assembled from **verbatim-kept messages**
+(the judge scores each message; low-confidence ones drop, ordered by confidence
+then size). Kept text rides byte-equal inside the stock checkpoint framing —
+live-verified end to end on host 0.2.2-rc.1: a pressure-forced compaction
+committed clean, and the checkpoint carried the task's load-bearing identifier
+verbatim. Judge off → the wrap never installs (stock prose, zero footprint);
+any judgment failure → the stock summarizer takes the range (fail-closed).
+Decisions land in the ledger as `kind: "engine"` events.
+
+Honest internals, all found live: the engine's strictly-smaller invariant
+prices the **compacted range**, not the replayed prefix the hook receives —
+the wrap targets a shrinking fraction of the prefix (25% → 12% → 6%, then
+hands the range to stock), converging across the host's own pressure retries;
+the framed estimate mirrors the engine's exact three-block framing; kept text
+is verbatim except byte-broken surrogates (a mid-character shell cut), which
+sanitize to U+FFFD — they would otherwise fail the session log's
+serializability check and lose the whole compaction.
+
 ## The compaction ledger — every decision is evidence (V2, 2026-11-26)
 
 Each judged keep/drop writes **one append-only ndjson event** — the trust

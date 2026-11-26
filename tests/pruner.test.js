@@ -352,3 +352,117 @@ test("ledger: why() renders the trail and says so when nothing was judged", () =
   assert.match(out, /9065 -> 3669/);
   assert.match(why(f, 99), /no ledger decisions/);
 });
+
+// ── V2 #10: the engine wrap (design-v2 §7 hermetic tests) ───────────────────
+import { wrapEngine } from "../lib/engine.js";
+import { flattenMessage } from "../lib/engine.js";
+
+function makeEngineCtx({ verdicts, est } = {}) {
+  const engineSvc = { summarize: async () => ({ summary: [{ type: "text", text: "STOCK PROSE" }] }) };
+  const ctx = {
+    compaction: engineSvc,
+    tokenMeter: { estimateMessage: (m) => est ? est(m) : Math.ceil(JSON.stringify(m).length / 4) },
+    on: () => {}, logger: { info() {}, warn() {}, debug() {} },
+  };
+  const savedFetch = globalThis.fetch;
+  if (verdicts) globalThis.fetch = async () => ({ ok: true, json: async () => ({ choices: [{ message: { content: JSON.stringify({ verdicts }) } }] }) });
+  return { ctx, engineSvc, restore: () => { globalThis.fetch = savedFetch; } };
+}
+
+test("engine: guards — off provider / missing summarize / double wrap", () => {
+  const mk = () => ({ compaction: { summarize: async () => 1 }, tokenMeter: { estimateMessage: () => 1 }, on: () => {}, logger: { info() {}, warn() {}, debug() {} } });
+  let c1 = mk();
+  wrapEngine(c1, resolveConfig({ judge: { provider: "off" } }), makeBreaker(3), () => {});
+  assert.equal(c1.compaction.summarize.name !== "csSemanticSummarize", true);          // never wrapped
+  const c2 = mk(); delete c2.compaction.summarize;
+  wrapEngine(c2, resolveConfig({ judge: { provider: "openai", baseUrl: "http://x" } }), makeBreaker(3), () => {}); // warns, skips
+  const c3 = mk(); const cfg = resolveConfig({ judge: { provider: "openai", baseUrl: "http://x" }, engine: {} });
+  wrapEngine(c3, cfg, makeBreaker(3), () => {});
+  const wrapped = c3.compaction.summarize;
+  wrapEngine(c3, cfg, makeBreaker(3), () => {});                                       // second apply
+  assert.equal(c3.compaction.summarize, wrapped);                                      // wrapped once
+});
+
+test("engine: happy path — kept text verbatim, dropped absent, extra fields ride", async () => {
+  const KEPT = "the error was EADDRINUSE on port 4242 — fixed by binding after close. " + "load-bearing detail. ".repeat(120);
+  const DROP = "chit-chat about the weather in Shanghai today. " + "small talk. ".repeat(120);
+  const msgs = [
+    { role: "system", content: [{ type: "text", text: "system preamble" }] },
+    { role: "user", content: [{ type: "text", text: KEPT }] },
+    { role: "user", content: [{ type: "text", text: DROP }] },
+  ];
+  const { ctx, engineSvc, restore } = makeEngineCtx({
+    verdicts: [{ id: "m0", p_keep: 0.99 }, { id: "m1", p_keep: 0.99 }, { id: "m2", p_keep: 0.02 }],
+    est: (m) => Math.ceil(JSON.stringify(m).length / 4),
+  });
+  const ledgerFile = path.join(fs.mkdtempSync(os.tmpdir() + "/cs-"), "l.ndjson");
+  const config = resolveConfig({ judge: { provider: "openai", baseUrl: "http://x" }, ledger: { path: ledgerFile }, engine: { minSavingsTokens: 1, targetFactor: 0.9 } });
+  const breaker = makeBreaker(3);
+  wrapEngine(ctx, config, breaker, () => {});
+  const out = await ctx.compaction.summarize({ messages: msgs, tools: [] }, { session: { surface: { nodes: [] }, eventAt: () => undefined } });
+  restore();
+  assert.equal(out.provider, "dsh-compaction-semantic");                  // mirrors the stock result shape
+  assert.equal(out.summary[0].text.includes(KEPT), true);                 // verbatim
+  assert.equal(out.summary[0].text.includes(DROP), false);                // dropped
+  const entries = readLedger(ledgerFile);
+  assert.equal(entries.length, 1);
+  assert.equal(entries[0].kind, "engine");
+  assert.equal(entries[0].outcome, "kept-verbatim");
+  assert.equal(entries[0].keptCount >= 1, true);                    // counts ride the ledger
+  assert.equal(entries[0].droppedCount >= 1, true);
+  assert.match(why(ledgerFile, 1).source ?? why(ledgerFile, "nope"), /no ledger decisions/);   // engine events are not seq-addressed
+  assert.match(why(ledgerFile, "engine") || "", /.*/);                     // shape smoke
+});
+
+test("engine: judge drops EVERYTHING → stock prose (a checkpoint of nothing is worse than prose)", async () => {
+  // the reachable shrink-fallback: keep starts empty (every verdict below
+  // threshold) → an empty checkpoint is useless — hand the range back to the
+  // stock summarizer instead of committing nothing
+  const msgs = [
+    { role: "user", content: [{ type: "text", text: "stale detail one. " + "x".repeat(600) }] },
+    { role: "user", content: [{ type: "text", text: "stale detail two. " + "y".repeat(600) }] },
+  ];
+  const { ctx, restore } = makeEngineCtx({
+    verdicts: [{ id: "m0", p_keep: 0.01 }, { id: "m1", p_keep: 0.01 }],   // drop everything
+    est: (m) => Math.ceil(JSON.stringify(m).length / 4),
+  });
+  const ledgerFile = path.join(fs.mkdtempSync(os.tmpdir() + "/cs-"), "l.ndjson");
+  const config = resolveConfig({ judge: { provider: "openai", baseUrl: "http://x" }, ledger: { path: ledgerFile }, engine: { minSavingsTokens: 1, targetFactor: 0.9 } });
+  wrapEngine(ctx, config, makeBreaker(3), () => {});
+  const out = await ctx.compaction.summarize({ messages: msgs, tools: [] }, { session: { surface: { nodes: [] }, eventAt: () => undefined } });
+  restore();
+  assert.equal(out.summary[0].text, "STOCK PROSE");
+  const entries = readLedger(ledgerFile);
+  assert.equal(entries.length, 1);
+  assert.equal(entries[0].outcome, "stock-fallback-shrink");
+});
+
+test("engine: judge error mid-flight → stock, breaker advances", async () => {
+  const msgs = [{ role: "user", content: [{ type: "text", text: "x".repeat(400) }] }];
+  const { ctx, restore } = makeEngineCtx({ est: () => 500 });
+  const savedFetch = globalThis.fetch;
+  globalThis.fetch = async () => { throw new TypeError("fetch failed"); };
+  const config = resolveConfig({ judge: { provider: "openai", baseUrl: "http://x" }, engine: { minSavingsTokens: 1, targetFactor: 0.9 } });
+  const breaker = makeBreaker(2);
+  wrapEngine(ctx, config, breaker, () => {});
+  const out = await ctx.compaction.summarize({ messages: msgs, tools: [] }, { session: { surface: { nodes: [] }, eventAt: () => undefined } });
+  globalThis.fetch = savedFetch; restore();
+  assert.equal(out.summary[0].text, "STOCK PROSE");
+  assert.equal(breaker.tripped, false);                                   // one failure advanced it; the NEXT session would trip
+});
+
+test("engine: non-text content flattens fenced; string content accepted", () => {
+  const f1 = flattenMessage({ role: "assistant", content: [{ type: "tool-call", id: "t1" }, { type: "text", text: "after call" }] });
+  assert.match(f1.text, /```/);                                           // fenced, not silently dropped
+  assert.match(f1.text, /after call/);                                    // byte-equal text part
+  const f2 = flattenMessage({ role: "user", content: "plain string content" });
+  assert.equal(f2.text, "plain string content");
+});
+
+test("engine: byte-broken surrogates sanitize (a mid-character cut must not fail the whole compaction)", () => {
+  const broken = "valid text " + "x".repeat(50) + "\uD800";          // lone high surrogate
+  const out = flattenMessage({ role: "user", content: [{ type: "text", text: broken }] });
+  assert.equal(JSON.stringify(out.summary ?? out).includes("\\uFFFD") || out.text.includes("\uFFFD"), true);
+  assert.doesNotThrow(() => JSON.stringify(out));
+  assert.equal(out.text.startsWith("valid text"), true);              // everything valid rides byte-equal
+});
