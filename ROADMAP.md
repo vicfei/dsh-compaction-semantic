@@ -94,7 +94,13 @@ surface. V1 adopts fast-jev-compaction's battle-tested defaults (pinned head
       Live-verified: GPL smoke → 10 spans, 4 kept, 9065 → 3669 chars, judge
       13 ms; the trail reads back per-span KEEP/DROP
 - [ ] `summarize()`-hook engine: per-message keep/drop instead of LLM prose
-      summary, checkpoint framing honored (strictly-smaller invariant)
+      summary, checkpoint framing honored (strictly-smaller invariant) —
+      **design decision-complete 2026-11-26:
+      [docs/design-v2.md](docs/design-v2.md)** (spike re-pinned on host
+      0.2.2-rc.1: the hook is `summarize()`, the service is `ctx.compaction`,
+      the invariant is priced tokens vs `shadowedRouteTokenCount`, dispatch is
+      dynamic through the instance → an instance wrap IS the subclass hook);
+      implementation awaits owner review
 - [ ] A/B harness: same sessions through official vs semantic, measure
       recall of stale-but-load-bearing facts (the honest metric)
 
