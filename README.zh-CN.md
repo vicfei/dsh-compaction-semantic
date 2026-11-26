@@ -55,6 +55,21 @@ dsh --profile <name> "hi" 2>&1 | grep "semantic pruner armed"           # 插件
 什么都没看到的原因。开发落雷：pnpm `file:` 安装是硬链接——改了源仓再
 `git checkout` 还原，profile 的 `.pnpm` 存里留着坏副本；重测前先同步或重装。
 
+## 压缩台账——每条决策都是证据（V2，2026-11-26）
+
+每次判官保/删落**一条只增不改的 ndjson 事件**——"你删了我上下文里的什么"的
+信任面与 A/B 测量仪合一。默认 `~/.dsh/compaction-ledger.ndjson`；配置
+`ledger.path` 覆写，`ledger.path: "off"` 关闭。读一个节点的决策轨迹：
+
+```bash
+node scripts/why.mjs [台账路径] <seq>     # 每 span 的 KEEP/DROP、p_keep、字符数、判官耗时
+```
+
+静默是有意义的：**没有事件 = 没有发生判定**（判官关/断路器跳闸/零候选）——
+与官方行为的等价由"缺席"证明，而不是靠记一条"什么都没做"。未提交的判定
+（如不变式拒绝）以 `committed: false` 落账。台账永不打断回合：落账失败打
+stderr，剪枝照常。
+
 ## 状态
 
 Spike #1（本分析）2026-11-21 交付。见 [ROADMAP.md](ROADMAP.md)。

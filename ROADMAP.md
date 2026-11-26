@@ -87,6 +87,12 @@ surface. V1 adopts fast-jev-compaction's battle-tested defaults (pinned head
       surfaceOp); first CI workflow for the repo (tests + syntax + gate)
 
 ### V2 · Keep/drop compaction engine (after V1 proves the request shape)
+- [x] instrumentation first — the compaction ledger (#7, 2026-11-26): one
+      append-only ndjson event per judged decision (span verdicts with p_keep,
+      chars, judge latency, session); `scripts/why.mjs` reads the trail;
+      silence = no judgment happened (stock equivalence by absence).
+      Live-verified: GPL smoke → 10 spans, 4 kept, 9065 → 3669 chars, judge
+      13 ms; the trail reads back per-span KEEP/DROP
 - [ ] `summarize()`-hook engine: per-message keep/drop instead of LLM prose
       summary, checkpoint framing honored (strictly-smaller invariant)
 - [ ] A/B harness: same sessions through official vs semantic, measure
