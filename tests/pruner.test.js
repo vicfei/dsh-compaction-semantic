@@ -252,3 +252,37 @@ test("apply() writes the arming line to stderr (the mount proof)", () => {
   }
   assert(lines.some((l) => l.includes("dsh-compaction-semantic: semantic pruner armed (provider=off")));
 });
+
+// ── live-found bugs (2026-11-26, host 0.2.2-rc.1): regression pins ───────────
+test("rewrite: partial drop ABOVE threshold still prunes (strictly-smaller is the invariant)", () => {
+  // found live: the old `after > thresholdChars → refuse` rule made every
+  // partial drop refuse silently — judgment keeps load-bearing content, and
+  // what stays over budget is the engine's to summarize
+  const { session } = makeFakeSession({ results: [{ content: [{ type: "text", text: bigText(12000) }] }] });
+  const config = resolveConfig({ preserveRecentNodes: 0, thresholdChars: 1000, minSavingsChars: 100 });
+  const candidate = selectCandidates({ session, config })[0];
+  const dropOne = new Map([["1:0:0", 0.01], ["1:0:1", 0.99], ["1:0:2", 0.99], ["1:0:3", 0.99],
+                           ["1:0:4", 0.99], ["1:0:5", 0.99], ["1:0:6", 0.99], ["1:0:7", 0.99],
+                           ["1:0:8", 0.99], ["1:0:9", 0.99]]);
+  const r = rewriteCandidate({ session, candidate, verdicts: dropOne, config });
+  assert.equal(r.pruned, true);                                  // smaller, though far above threshold
+  assert.ok(r.charsAfter > config.thresholdChars);
+  assert.ok(r.charsAfter < r.charsBefore);
+});
+test("spanParts/rewrite: deriveEventMessage without content falls back to the event's own blocks", () => {
+  // found live: on host 0.2.2 deriveEventMessage(event).content can be absent;
+  // both readers must fall back or the whole judge path goes silently empty
+  const blocks = [{ type: "text", text: bigText(9000) }];
+  const session = {
+    surface: { nodes: [1] },
+    eventAt: () => ({ type: "tool/result", data: { message: { source: { kind: "tool" }, content: blocks } } }),
+    deriveEventMessage: () => ({ role: "tool" }),                 // no .content — the 0.2.2 shape
+    append: (type, data, opts) => ({ seq: 2, type, data, ...opts }),
+  };
+  const config = resolveConfig({ preserveRecentNodes: 0, thresholdChars: 1000, minSavingsChars: 100 });
+  const candidate = selectCandidates({ session, config })[0];
+  const parts = splitBlocks(blocks, config.spanTargetChars);
+  const verdicts = new Map(parts.map((p, i) => [`1:0:${i}`, i % 2 ? 0.01 : 0.99]));
+  const r = rewriteCandidate({ session, candidate, verdicts, config, tokenMeter: null });
+  assert.equal(r.pruned, true);                                  // the fallback fed the split
+});

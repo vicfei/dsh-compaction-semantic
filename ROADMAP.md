@@ -53,9 +53,26 @@ surface. V1 adopts fast-jev-compaction's battle-tested defaults (pinned head
 - [x] install docs — the verified mount walk (bundles landmine, `- insert:`
       row shape, `name` = module specifier, the stderr arming proof, the pnpm
       `file:` hardlink landmine) — 2026-11-26, live on host 0.2.2-rc.1
-- [ ] PR5 live smokes (mock-judge session: rewrite + engine skips summary +
-      replay recovers; judge-off ≡ stock) — npm 0.1.0 + awesome submission
-      already live (2026-11-22)
+- [x] PR5 live smokes (2026-11-26, host 0.2.2-rc.1, local mock judge) —
+      **rewrite verified live**: 9000-char GPL tool result → 10-span batched
+      judge round-trip → scattered keep/drop committed through the official
+      protocol → `pruned 1 result(s), ~5396 chars reclaimed`, and a later
+      turn still recalled "GPL version 3" from the kept spans (replay-safe
+      replace + recall). **judge-off ≡ stock**: provider=off leaves exactly
+      one arming line, zero prune, zero activation warnings. Engine-skips-
+      summary: not directly observed (the engine's own trigger logs nothing);
+      the prune provably runs BEFORE engine compaction — honest gap. npm
+      0.1.0 + awesome submission were already live (2026-11-22)
+- The live smoke caught four real bugs (all fixed + regression-pinned):
+      ① `deriveEventMessage(event).content` absent on host 0.2.2 → the whole
+      judge path went silently empty (fallback to the event's own message
+      blocks, in both spanParts and rewriteCandidate); ② missing module-level
+      `inject = ["tokenMeter"]` → cordis refused the service lookup; ③ the
+      `after > thresholdChars → refuse` invariant made every partial drop
+      refuse — reaching budget is the engine's job, strictly-smaller is ours;
+      ④ paragraph-level rebuilding could not drop a hard-split span (spans of
+      one monster paragraph shared it) — rebuild now walks spans in order,
+      kept span text byte-equal
 
 ### P0 · V1 closeout (2026-11-26)
 - [x] issue #4 — the mount verified end to end live: the module DOES load
